@@ -414,33 +414,22 @@ function getHealthLabel(score: number): string {
   return 'Cold';
 }
 
-// Demo data
-const DEMO_DEALS: PipelineDeal[] = [
-  { id: '1', company: 'Meridian Systems', contactName: 'Sarah Chen', dealValue: 125000, stage: 'negotiation', probability: 80, expectedCloseDate: '2026-03-28', signals: 14, healthScore: 88, tags: ['enterprise', 'cloud'], daysInStage: 5 },
-  { id: '2', company: 'Arctura Holdings', contactName: 'James Park', dealValue: 89000, stage: 'proposal', probability: 60, expectedCloseDate: '2026-04-15', signals: 9, healthScore: 72, tags: ['fintech'], daysInStage: 12 },
-  { id: '3', company: 'Vectrix Labs', contactName: 'Elena Vasquez', dealValue: 250000, stage: 'discovery', probability: 40, expectedCloseDate: '2026-05-01', signals: 22, healthScore: 91, tags: ['ai/ml', 'series-b'], daysInStage: 8 },
-  { id: '4', company: 'Northvane Energy', contactName: 'Michael Torres', dealValue: 65000, stage: 'qualification', probability: 20, expectedCloseDate: '2026-05-30', signals: 7, healthScore: 45, tags: ['cleantech'], daysInStage: 3 },
-  { id: '5', company: 'Crestline Biotech', contactName: 'Dr. Wei Zhang', dealValue: 180000, stage: 'proposal', probability: 60, expectedCloseDate: '2026-04-20', signals: 11, healthScore: 67, tags: ['biotech', 'enterprise'], daysInStage: 15 },
-  { id: '6', company: 'Stratosphere AI', contactName: 'Priya Sharma', dealValue: 320000, stage: 'prospecting', probability: 10, expectedCloseDate: '2026-07-01', signals: 18, healthScore: 55, tags: ['ai/ml', 'unicorn'], daysInStage: 2 },
-  { id: '7', company: 'TerraCloud', contactName: 'David Okonkwo', dealValue: 95000, stage: 'negotiation', probability: 80, expectedCloseDate: '2026-03-20', signals: 12, healthScore: 82, tags: ['cloud', 'devops'], daysInStage: 7 },
-  { id: '8', company: 'Nexus Fintech', contactName: 'Anna Kowalski', dealValue: 45000, stage: 'closed_won', probability: 100, expectedCloseDate: '2026-03-01', signals: 6, healthScore: 90, tags: ['fintech'], daysInStage: 0 },
-  { id: '9', company: 'QuantumScale', contactName: 'Ben Harris', dealValue: 72000, stage: 'closed_lost', probability: 0, expectedCloseDate: '2026-02-15', signals: 4, healthScore: 25, tags: ['quantum'], daysInStage: 0 },
-  { id: '10', company: 'DataForge', contactName: 'Lisa Chang', dealValue: 155000, stage: 'discovery', probability: 40, expectedCloseDate: '2026-05-15', signals: 16, healthScore: 78, tags: ['data', 'enterprise'], daysInStage: 10 },
-];
+// Deals loaded dynamically from deal-pipeline service
+const INITIAL_DEALS: PipelineDeal[] = [];
 
-const DEMO_FORECAST: ForecastData = {
-  committed: 220000,
-  bestCase: 1_396_000,
-  expected: 684_000,
-  pipeline: 1_396_000,
-  quota: 800_000,
+const INITIAL_FORECAST: ForecastData = {
+  committed: 0,
+  bestCase: 0,
+  expected: 0,
+  pipeline: 0,
+  quota: 0,
 };
 
 export class PipelineDashboard {
   private root: HTMLElement;
   private styleElement: HTMLStyleElement | null = null;
-  private deals: PipelineDeal[] = DEMO_DEALS;
-  private forecast: ForecastData = DEMO_FORECAST;
+  private deals: PipelineDeal[] = INITIAL_DEALS;
+  private forecast: ForecastData = INITIAL_FORECAST;
   private onDealClick: ((dealId: string) => void) | null = null;
   private onCreateDeal: (() => void) | null = null;
 

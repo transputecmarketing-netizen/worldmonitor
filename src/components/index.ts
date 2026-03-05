@@ -14,6 +14,12 @@ export { EngagementTracker } from './EngagementTracker';
 export { CompetitiveBattlecard } from './CompetitiveBattlecard';
 export { AnalyticsDashboard } from './AnalyticsDashboard';
 
+// System 7: Advanced UX
+export { CommandPalette } from './CommandPalette';
+export { MorningBriefing } from './MorningBriefing';
+export { WinLossInsights } from './WinLossInsights';
+export { TerritoryView } from './TerritoryView';
+
 // Retained / Repurposed Panels
 export * from './NewsPanel';
 export * from './MonitorPanel';

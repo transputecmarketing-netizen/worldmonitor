@@ -360,54 +360,21 @@ function formatSignalType(type: string): string {
   return type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 }
 
-// Demo data
-const DEMO: AnalyticsData = {
-  pipelineValue: 1_396_000,
-  weightedPipeline: 684_000,
-  winRate: 34,
-  winRateTrend: 8,
-  avgDealSize: 112_000,
-  avgCycleLength: 42,
-  dealsWon: 12,
-  revenueWon: 1_344_000,
-  funnel: [
-    { stage: 'Prospecting', count: 45, value: 4_500_000, conversionRate: 100 },
-    { stage: 'Qualification', count: 28, value: 2_800_000, conversionRate: 62 },
-    { stage: 'Discovery', count: 18, value: 1_980_000, conversionRate: 64 },
-    { stage: 'Proposal', count: 12, value: 1_440_000, conversionRate: 67 },
-    { stage: 'Negotiation', count: 8, value: 960_000, conversionRate: 67 },
-    { stage: 'Closed Won', count: 5, value: 560_000, conversionRate: 63 },
-  ],
-  signalROI: [
-    { signalType: 'funding_event', dealsInfluenced: 18, revenue: 2_160_000, conversionRate: 68 },
-    { signalType: 'executive_movement', dealsInfluenced: 14, revenue: 1_540_000, conversionRate: 55 },
-    { signalType: 'hiring_surge', dealsInfluenced: 22, revenue: 1_320_000, conversionRate: 45 },
-    { signalType: 'technology_adoption', dealsInfluenced: 11, revenue: 880_000, conversionRate: 42 },
-    { signalType: 'expansion_signal', dealsInfluenced: 8, revenue: 640_000, conversionRate: 38 },
-  ],
-  reps: [
-    { name: 'Sarah Chen', dealsWon: 5, revenue: 625_000, winRate: 45, avgCycle: 35 },
-    { name: 'James Park', dealsWon: 4, revenue: 356_000, winRate: 38, avgCycle: 42 },
-    { name: 'Elena Vasquez', dealsWon: 3, revenue: 363_000, winRate: 30, avgCycle: 51 },
-  ],
-  insights: [
-    'Win rate improved 8% this quarter, driven by better signal-based timing in outreach',
-    'Deals with 3+ converging signal types close 2.3x faster than single-signal deals',
-    'Qualification stage is your biggest bottleneck — 38% of deals stall here for 10+ days',
-    'Funding Event signals produce highest ROI: 68% conversion rate, $120K avg deal size',
-    '5 deals worth $320K have had no activity in 14+ days — consider re-engagement',
-    'Pipeline coverage ratio is 1.7x quota — healthy but watch for Q2 gap',
-  ],
-  revenueTrend: [
-    { date: '2026-01-06', value: 85000 },
-    { date: '2026-01-13', value: 120000 },
-    { date: '2026-01-20', value: 95000 },
-    { date: '2026-01-27', value: 180000 },
-    { date: '2026-02-03', value: 145000 },
-    { date: '2026-02-10', value: 210000 },
-    { date: '2026-02-17', value: 168000 },
-    { date: '2026-02-24', value: 250000 },
-  ],
+// Analytics loaded dynamically from revenue-analytics service — starts empty
+const INITIAL_ANALYTICS: AnalyticsData = {
+  pipelineValue: 0,
+  weightedPipeline: 0,
+  winRate: 0,
+  winRateTrend: 0,
+  avgDealSize: 0,
+  avgCycleLength: 0,
+  dealsWon: 0,
+  revenueWon: 0,
+  funnel: [],
+  signalROI: [],
+  reps: [],
+  insights: ['Loading analytics data...'],
+  revenueTrend: [],
 };
 
 const FUNNEL_COLORS = ['#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#f97316', '#10b981'];
@@ -415,7 +382,7 @@ const FUNNEL_COLORS = ['#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#f97316', '#
 export class AnalyticsDashboard {
   private root: HTMLElement;
   private styleElement: HTMLStyleElement | null = null;
-  private data: AnalyticsData = DEMO;
+  private data: AnalyticsData = INITIAL_ANALYTICS;
 
   constructor() {
     this.root = document.createElement('div');

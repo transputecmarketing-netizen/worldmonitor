@@ -326,8 +326,8 @@ function formatCurrency(amount: number): string {
   return `$${amount.toLocaleString()}`;
 }
 
-// Demo battlecard data
-const DEMO_DATA: BattlecardData = {
+// Default battlecard — loaded from competitive-intel service when available
+const DEFAULT_BATTLECARD: BattlecardData = {
   competitorName: 'ZoomInfo',
   competitorDomain: 'zoominfo.com',
   marketPosition: 'leader',
@@ -391,7 +391,7 @@ Want me to show you what the signals look like for one of your target accounts?"
 export class CompetitiveBattlecard {
   private root: HTMLElement;
   private styleElement: HTMLStyleElement | null = null;
-  private data: BattlecardData = DEMO_DATA;
+  private data: BattlecardData = DEFAULT_BATTLECARD;
 
   constructor() {
     this.root = document.createElement('div');

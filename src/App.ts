@@ -13,12 +13,21 @@ import { PipelineDashboard } from '@/components/PipelineDashboard';
 import { EngagementTracker } from '@/components/EngagementTracker';
 import { CompetitiveBattlecard } from '@/components/CompetitiveBattlecard';
 import { AnalyticsDashboard } from '@/components/AnalyticsDashboard';
+import { CommandPalette } from '@/components/CommandPalette';
+import { MorningBriefing } from '@/components/MorningBriefing';
+import { WinLossInsights } from '@/components/WinLossInsights';
+import { TerritoryView } from '@/components/TerritoryView';
 import { loadFromStorage } from '@/utils';
 import { mlWorker } from '@/services/ml-worker';
 import { getAiFlowSettings, isHeadlineMemoryEnabled } from '@/services/ai-flow-settings';
 import { dataFreshness } from '@/services/data-freshness';
+import { researchAgent } from '@/services/research-agent';
+import { monitorAgent } from '@/services/monitor-agent';
+import { dealPipeline } from '@/services/deal-pipeline';
+import { emailSequenceManager } from '@/services/email-sequences';
+import { revenueAnalytics } from '@/services/revenue-analytics';
 
-type Page = 'dashboard' | 'targets' | 'signals' | 'pipeline' | 'prospects' | 'campaigns' | 'analytics' | 'compete' | 'settings' | 'company-detail';
+type Page = 'dashboard' | 'targets' | 'signals' | 'pipeline' | 'prospects' | 'campaigns' | 'analytics' | 'compete' | 'briefing' | 'territory' | 'settings' | 'company-detail';
 
 // SVG icon paths (Lucide-style, stroke-width 1.5, 20x20 viewBox)
 const ICONS: Record<string, string> = {
@@ -30,6 +39,8 @@ const ICONS: Record<string, string> = {
   campaigns: '<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>',
   analytics: '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
   compete: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C5.71 4 7 5.29 7 6.5V8"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C18.29 4 17 5.29 17 6.5V8"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
+  briefing: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/>',
+  territory: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>',
   settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
   search: '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
   bell: '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
@@ -48,6 +59,8 @@ const NAV_ITEMS: Array<{ id: Page; label: string; icon: string; badge?: number }
   { id: 'campaigns', label: 'Campaigns', icon: 'campaigns' },
   { id: 'analytics', label: 'Analytics', icon: 'analytics' },
   { id: 'compete', label: 'Compete', icon: 'compete' },
+  { id: 'briefing', label: 'Briefing', icon: 'briefing' },
+  { id: 'territory', label: 'Territory', icon: 'territory' },
   { id: 'settings', label: 'Settings', icon: 'settings' },
 ];
 
@@ -66,6 +79,10 @@ export class App {
   private engagementTracker: EngagementTracker | null = null;
   private competitiveBattlecard: CompetitiveBattlecard | null = null;
   private analyticsDashboard: AnalyticsDashboard | null = null;
+  private morningBriefing: MorningBriefing | null = null;
+  private territoryView: TerritoryView | null = null;
+  private winLossInsights: WinLossInsights | null = null;
+  private commandPalette: CommandPalette | null = null;
 
   constructor(containerId: string) {
     const el = document.getElementById(containerId);
@@ -79,6 +96,24 @@ export class App {
 
     // Build the app shell
     this.renderShell();
+
+    // Initialize Command Palette (⌘K)
+    this.commandPalette = new CommandPalette();
+    this.commandPalette.registerCommands([
+      { id: 'nav-dashboard', label: 'Go to Dashboard', category: 'navigation', handler: () => this.navigateTo('dashboard') },
+      { id: 'nav-targets', label: 'Go to Targets', category: 'navigation', handler: () => this.navigateTo('targets') },
+      { id: 'nav-signals', label: 'Go to Signal Alerts', category: 'navigation', handler: () => this.navigateTo('signals') },
+      { id: 'nav-pipeline', label: 'Go to Pipeline', category: 'navigation', handler: () => this.navigateTo('pipeline') },
+      { id: 'nav-analytics', label: 'Go to Analytics', category: 'navigation', handler: () => this.navigateTo('analytics') },
+      { id: 'nav-compete', label: 'Go to Compete', category: 'navigation', handler: () => this.navigateTo('compete') },
+      { id: 'nav-briefing', label: 'Go to Morning Briefing', category: 'navigation', handler: () => this.navigateTo('briefing') },
+      { id: 'nav-territory', label: 'Go to Territory', category: 'navigation', handler: () => this.navigateTo('territory') },
+      { id: 'nav-settings', label: 'Go to Settings', category: 'navigation', handler: () => this.navigateTo('settings') },
+      { id: 'action-research', label: 'Research a Company', description: 'Run deep research on any company', category: 'ai', handler: () => {
+        const name = prompt('Enter company name:');
+        if (name) this.showCompanyIntelligence(name);
+      }},
+    ]);
 
     // Navigate to default page
     this.navigateTo('dashboard');
@@ -210,6 +245,12 @@ export class App {
       case 'compete':
         this.renderCompete();
         break;
+      case 'briefing':
+        this.renderBriefing();
+        break;
+      case 'territory':
+        this.renderTerritory();
+        break;
       case 'settings':
         this.renderPlaceholder('Settings', 'Signal preferences, API keys, and team configuration.');
         break;
@@ -271,38 +312,91 @@ export class App {
     }
 
     this.companyIntelligence = new CompanyIntelligence();
+
+    // Show loading state with company name while research runs
     this.companyIntelligence.setCompanyData({
       name: companyName,
-      category: 'Enterprise SaaS',
-      location: 'San Francisco, CA',
-      employeeRange: '1,000 - 5,000',
-      fundingStage: 'Series C',
-      executives: [
-        { name: 'Sarah Chen', title: 'Chief Technology Officer', quote: 'We are doubling down on cloud infrastructure this year.', quoteSource: 'Earnings Call Q4' },
-        { name: 'Michael Torres', title: 'VP Engineering', quote: 'Our migration to Kubernetes is our top priority.', quoteSource: 'LinkedIn Post' },
-      ],
-      triggers: [
-        { label: 'Cloud Migration', type: 'new', description: 'CTO mentioned Kubernetes migration in earnings call', actionText: 'VIEW TECH STACK' },
-        { label: 'EMEA Expansion', type: 'detected', description: '12 new job postings in London and Berlin offices', actionText: 'EMEA CLOUD PLAY' },
-      ],
-      socialPosts: [
-        { author: 'Sarah Chen', authorTitle: 'CTO', preview: 'Excited to share our journey migrating 200+ microservices to Kubernetes...', likes: 342, comments: 47, shares: 89, timestamp: new Date().toISOString() },
-      ],
-      icebreakers: [
-        'Congrats on the K8s migration milestone — we helped Stripe navigate a similar transition. Happy to share what we learned.',
-        'Noticed your EMEA expansion — we have deep experience scaling cloud infra across EU regions. Worth a quick chat?',
-      ],
-      timeline: [
-        { date: new Date(Date.now() - 2 * 86400000).toISOString(), title: 'CTO LinkedIn Post', description: 'Kubernetes migration progress update' },
-        { date: new Date(Date.now() - 5 * 86400000).toISOString(), title: 'Series C Announced', description: '$85M round led by Sequoia Capital' },
-        { date: new Date(Date.now() - 14 * 86400000).toISOString(), title: 'VP Engineering Hired', description: 'Michael Torres joins from Datadog' },
-        { date: new Date(Date.now() - 30 * 86400000).toISOString(), title: 'EMEA Office Opening', description: 'London office announced, 50 roles posted' },
-      ],
-      accountHealthScore: 82,
+      category: 'Researching...',
+      location: '—',
+      employeeRange: '—',
+      fundingStage: '—',
+      executives: [],
+      triggers: [],
+      socialPosts: [],
+      icebreakers: [],
+      timeline: [],
+      accountHealthScore: 0,
     });
+
     if (this.pageContainer) {
       this.companyIntelligence.render(this.pageContainer);
     }
+
+    // Run real research via the research agent
+    researchAgent.runResearch(companyName).then((result) => {
+      if (!this.companyIntelligence) return; // navigated away
+
+      // Map research result → CompanyIntelData
+      const executives = (result.orgChart ?? []).map(p => ({
+        name: p.name,
+        title: p.title,
+      }));
+
+      const triggers = (result.signals ?? []).slice(0, 6).map(s => ({
+        label: s.title,
+        type: (s.strength === 'strong' ? 'new' : 'detected') as 'new' | 'detected',
+        description: `${s.source} — ${s.type.replace(/_/g, ' ')}`,
+        actionText: 'VIEW SIGNAL',
+      }));
+
+      const timeline = (result.signals ?? []).slice(0, 8).map(s => ({
+        date: s.timestamp || new Date().toISOString(),
+        title: s.title,
+        description: s.source,
+      }));
+
+      const icebreakers = (result.recommendedActions ?? []).slice(0, 3);
+
+      this.companyIntelligence.setCompanyData({
+        name: result.firmographics?.name ?? companyName,
+        domain: result.domain,
+        category: result.firmographics?.industry ?? result.lifecycleStage ?? 'Unknown',
+        location: result.firmographics?.location ?? '—',
+        employeeRange: '—',
+        fundingStage: result.lifecycleStage ?? '—',
+        website: result.firmographics?.website,
+        executives,
+        triggers,
+        socialPosts: (result.newsMentions ?? []).slice(0, 3).map(n => ({
+          author: n.title,
+          preview: n.url,
+          likes: n.points ?? 0,
+          comments: 0,
+          shares: 0,
+          timestamp: n.date,
+        })),
+        icebreakers,
+        timeline,
+        accountHealthScore: result.accountHealthScore ?? 0,
+      });
+    }).catch((err) => {
+      console.warn('[SalesIntel] Research failed:', err);
+      if (this.companyIntelligence) {
+        this.companyIntelligence.setCompanyData({
+          name: companyName,
+          category: 'Research unavailable',
+          location: '—',
+          employeeRange: '—',
+          fundingStage: '—',
+          executives: [],
+          triggers: [],
+          socialPosts: [],
+          icebreakers: ['Try searching again or check your network connection.'],
+          timeline: [],
+          accountHealthScore: 0,
+        });
+      }
+    });
   }
 
   private renderPipeline(): void {
@@ -315,6 +409,24 @@ export class App {
       console.log('[SalesIntel] Create new deal');
     });
     this.pipelineDashboard.render(this.pageContainer);
+
+    // Load real deals from deal-pipeline service
+    dealPipeline.getDeals().then(deals => {
+      if (!this.pipelineDashboard || deals.length === 0) return;
+      this.pipelineDashboard.setDeals(deals.map(d => ({
+        id: d.id,
+        company: d.company,
+        contactName: d.contactName,
+        dealValue: d.dealValue,
+        stage: d.stage,
+        probability: d.probability,
+        expectedCloseDate: d.expectedCloseDate,
+        signals: d.signals?.length ?? 0,
+        healthScore: 50,
+        tags: d.tags ?? [],
+        daysInStage: 0,
+      })));
+    }).catch((err: unknown) => console.warn('[SalesIntel] Pipeline load error:', err));
   }
 
   private renderEngagement(): void {
@@ -324,18 +436,134 @@ export class App {
       console.log(`[SalesIntel] View sequence: ${seqId}`);
     });
     this.engagementTracker.render(this.pageContainer);
+
+    // Load real sequences from email-sequences service
+    emailSequenceManager.listSequences().then(seqs => {
+      if (!this.engagementTracker || seqs.length === 0) return;
+      this.engagementTracker.setSequences(seqs.map(s => ({
+        id: s.id,
+        name: s.name,
+        status: s.status as 'active' | 'paused' | 'draft',
+        totalEnrolled: s.stats.totalEnrolled,
+        active: s.stats.active,
+        replied: s.stats.replied,
+        openRate: s.stats.openRate,
+        replyRate: s.stats.replyRate,
+        steps: s.steps?.length ?? 0,
+      })));
+    }).catch((err: unknown) => console.warn('[SalesIntel] Sequences load error:', err));
   }
 
   private renderAnalytics(): void {
     if (!this.pageContainer) return;
     this.analyticsDashboard = new AnalyticsDashboard();
     this.analyticsDashboard.render(this.pageContainer);
+
+    // Load real analytics from revenue-analytics service
+    revenueAnalytics.getExecutiveSummary().then((summary: { pipelineValue: number; weightedPipeline: number; winRate: number; avgDealSize: number; avgCycleLength: number; dealsWonThisPeriod: number; revenueThisPeriod: number; insights: string[] }) => {
+      if (!this.analyticsDashboard) return;
+      this.analyticsDashboard.setData({
+        pipelineValue: summary.pipelineValue ?? 0,
+        weightedPipeline: summary.weightedPipeline ?? 0,
+        winRate: Math.round((summary.winRate ?? 0) * 100),
+        winRateTrend: 0,
+        avgDealSize: summary.avgDealSize ?? 0,
+        avgCycleLength: summary.avgCycleLength ?? 0,
+        dealsWon: summary.dealsWonThisPeriod ?? 0,
+        revenueWon: summary.revenueThisPeriod ?? 0,
+        funnel: [],
+        signalROI: [],
+        reps: [],
+        insights: summary.insights ?? [],
+        revenueTrend: [],
+      });
+    }).catch((err: unknown) => console.warn('[SalesIntel] Analytics load error:', err));
   }
 
   private renderCompete(): void {
     if (!this.pageContainer) return;
     this.competitiveBattlecard = new CompetitiveBattlecard();
     this.competitiveBattlecard.render(this.pageContainer);
+  }
+
+  private renderBriefing(): void {
+    if (!this.pageContainer) return;
+    const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+
+    // Populate from monitor agent alerts
+    const alerts = monitorAgent.getAlerts?.() ?? [];
+    const topSignals = alerts.slice(0, 5).map(a => ({
+      company: a.company,
+      signal: a.signal?.title ?? 'New signal detected',
+      urgency: ('high') as 'critical' | 'high' | 'medium',
+      signalType: a.signal?.type ?? 'press_release',
+      source: a.signal?.source ?? 'monitor',
+      timestamp: a.detectedAt.toISOString(),
+      action: 'Review signal',
+    }));
+
+    this.morningBriefing = new MorningBriefing({
+      date: dateStr,
+      greeting: 'Good morning',
+      topSignals,
+      closingWindows: [],
+      cascadeAlerts: [],
+      newDecisionMakers: [],
+      followUps: [],
+      teamInsight: '',
+      stats: {
+        newSignals: alerts.length,
+        watchlistCompanies: 0,
+        pipelineValue: '$0',
+        tasksToday: 0,
+      },
+    });
+    this.morningBriefing.render(this.pageContainer);
+  }
+
+  private renderTerritory(): void {
+    if (!this.pageContainer) return;
+    this.territoryView = new TerritoryView({
+      repName: 'My',
+      totalAccounts: 0,
+      activeSignals: 0,
+      pipelineValue: 0,
+      territories: [],
+    });
+    this.territoryView.render(this.pageContainer);
+
+    // Populate from deal-pipeline accounts
+    dealPipeline.getDeals().then((deals: Array<{ company: string; dealValue: number; probability: number; stage: string; expectedCloseDate: string; tags: string[]; updatedAt: string; createdAt: string }>) => {
+      if (!this.territoryView) return;
+      const tier1 = deals.filter(d => d.dealValue >= 100000);
+      const tier2 = deals.filter(d => d.dealValue >= 50000 && d.dealValue < 100000);
+      const tier3 = deals.filter(d => d.dealValue < 50000);
+
+      const mapDeals = (dealsArr: typeof deals) => dealsArr.map(d => ({
+        company: d.company,
+        industry: d.tags?.[0] ?? 'Unknown',
+        healthScore: 50,
+        propensityScore: d.probability ?? 30,
+        signalCount: 0,
+        buyingWindow: d.expectedCloseDate ? '30-60 days' : '90+ days',
+        lastSignal: d.stage,
+        lastSignalDate: d.updatedAt ?? d.createdAt ?? new Date().toISOString(),
+      }));
+
+      const territories: Array<{ tier: 1 | 2 | 3; tierLabel: string; accounts: ReturnType<typeof mapDeals> }> = [
+        { tier: 1 as const, tierLabel: 'Strategic (>$100K)', accounts: mapDeals(tier1) },
+        { tier: 2 as const, tierLabel: 'Growth ($50K-$100K)', accounts: mapDeals(tier2) },
+        { tier: 3 as const, tierLabel: 'Velocity (<$50K)', accounts: mapDeals(tier3) },
+      ].filter(g => g.accounts.length > 0);
+
+      this.territoryView!.setData({
+        repName: 'My',
+        totalAccounts: deals.length,
+        activeSignals: 0,
+        pipelineValue: deals.reduce((s, d) => s + d.dealValue, 0),
+        territories,
+      });
+    }).catch((err: unknown) => console.warn('[SalesIntel] Territory load error:', err));
   }
 
   private renderPlaceholder(title: string, description: string): void {
@@ -366,6 +594,12 @@ export class App {
     this.competitiveBattlecard = null;
     this.analyticsDashboard?.destroy();
     this.analyticsDashboard = null;
+    this.morningBriefing?.destroy();
+    this.morningBriefing = null;
+    this.territoryView?.destroy();
+    this.territoryView = null;
+    this.winLossInsights?.destroy();
+    this.winLossInsights = null;
   }
 
   private async initServices(): Promise<void> {
@@ -386,6 +620,10 @@ export class App {
       // Report data freshness
       dataFreshness.reportUpdate('rss', 0);
 
+      // Start continuous monitoring agent
+      monitorAgent.startPeriodicMonitoring();
+      console.log('[SalesIntel] Monitor Agent started');
+
     } catch (err) {
       console.warn('[SalesIntel] Service init error:', err);
     }
@@ -393,6 +631,9 @@ export class App {
 
   destroy(): void {
     this.destroyCurrentPage();
+    this.commandPalette?.destroy();
+    this.commandPalette = null;
+    monitorAgent.stopPeriodicMonitoring?.();
     this.container.innerHTML = '';
     this.navButtons.clear();
   }

@@ -351,30 +351,15 @@ function formatTimeAgo(date: Date): string {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-// Demo data
-const DEMO_SEQUENCES: SequenceOverview[] = [
-  { id: '1', name: 'The Warm Intro', status: 'active', totalEnrolled: 45, active: 28, replied: 8, openRate: 62, replyRate: 18, steps: 4 },
-  { id: '2', name: 'Signal Trigger', status: 'active', totalEnrolled: 32, active: 19, replied: 11, openRate: 71, replyRate: 34, steps: 3 },
-  { id: '3', name: 'Re-engagement', status: 'paused', totalEnrolled: 20, active: 0, replied: 3, openRate: 45, replyRate: 15, steps: 3 },
-  { id: '4', name: 'Enterprise Outbound', status: 'draft', totalEnrolled: 0, active: 0, replied: 0, openRate: 0, replyRate: 0, steps: 5 },
-];
-
-const DEMO_TOUCHES: TouchEvent[] = [
-  { id: '1', type: 'email_replied', contact: 'Sarah Chen', company: 'Meridian Systems', description: 'Replied to "Re: Cloud Migration" — interested in a demo next week', timestamp: new Date(Date.now() - 2 * 3600000), sequenceName: 'Signal Trigger', stepNumber: 2 },
-  { id: '2', type: 'email_opened', contact: 'James Park', company: 'Arctura Holdings', description: 'Opened "Funding Round Follow-up" (3rd time)', timestamp: new Date(Date.now() - 5 * 3600000), sequenceName: 'The Warm Intro', stepNumber: 3 },
-  { id: '3', type: 'signal', contact: 'Elena Vasquez', company: 'Vectrix Labs', description: 'New signal: VP Engineering hired from Datadog', timestamp: new Date(Date.now() - 8 * 3600000) },
-  { id: '4', type: 'email_sent', contact: 'Michael Torres', company: 'Northvane Energy', description: 'Step 1: Initial outreach sent', timestamp: new Date(Date.now() - 12 * 3600000), sequenceName: 'The Warm Intro', stepNumber: 1 },
-  { id: '5', type: 'email_clicked', contact: 'Priya Sharma', company: 'Stratosphere AI', description: 'Clicked link in "AI Infrastructure" email — visited pricing page', timestamp: new Date(Date.now() - 24 * 3600000), sequenceName: 'Signal Trigger', stepNumber: 1 },
-  { id: '6', type: 'meeting', contact: 'David Okonkwo', company: 'TerraCloud', description: 'Discovery call completed — 30 min, positive sentiment', timestamp: new Date(Date.now() - 36 * 3600000) },
-  { id: '7', type: 'email_bounced', contact: 'info@legacy.com', company: 'Legacy Corp', description: 'Hard bounce — invalid email address', timestamp: new Date(Date.now() - 48 * 3600000), sequenceName: 'Re-engagement', stepNumber: 1 },
-  { id: '8', type: 'call', contact: 'Anna Kowalski', company: 'Nexus Fintech', description: 'Outbound call — left voicemail, will follow up Thursday', timestamp: new Date(Date.now() - 72 * 3600000) },
-];
+// Sequences and touches loaded dynamically from email-sequences service
+const INITIAL_SEQUENCES: SequenceOverview[] = [];
+const INITIAL_TOUCHES: TouchEvent[] = [];
 
 export class EngagementTracker {
   private root: HTMLElement;
   private styleElement: HTMLStyleElement | null = null;
-  private sequences: SequenceOverview[] = DEMO_SEQUENCES;
-  private touches: TouchEvent[] = DEMO_TOUCHES;
+  private sequences: SequenceOverview[] = INITIAL_SEQUENCES;
+  private touches: TouchEvent[] = INITIAL_TOUCHES;
   private onSequenceClick: ((id: string) => void) | null = null;
 
   constructor() {

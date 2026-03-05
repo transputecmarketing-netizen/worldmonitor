@@ -252,13 +252,8 @@ interface ReportItem {
   signals: number;
 }
 
-const PLACEHOLDER_REPORTS: ReportItem[] = [
-  { company: 'Meridian Systems', timeAgo: '12 min ago', industry: 'Enterprise SaaS', signals: 14 },
-  { company: 'Arctura Holdings', timeAgo: '28 min ago', industry: 'Financial Services', signals: 9 },
-  { company: 'Vectrix Labs', timeAgo: '1 hr ago', industry: 'AI / ML', signals: 22 },
-  { company: 'Northvane Energy', timeAgo: '2 hr ago', industry: 'Clean Energy', signals: 7 },
-  { company: 'Crestline Biotech', timeAgo: '3 hr ago', industry: 'Biotech', signals: 11 },
-];
+// Reports loaded dynamically from signal monitor — starts empty
+const PLACEHOLDER_REPORTS: ReportItem[] = [];
 
 const FEATURE_PILLS: string[] = [
   'Pro Tip: Search by domain for instant enrichment',
